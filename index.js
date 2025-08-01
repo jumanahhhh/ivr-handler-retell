@@ -80,16 +80,29 @@ app.post('/ivr', (req, res) => {
   }
 
   // Case 3: Extract digit to press
+  // If digit was already pressed once, and this is not a retry, ignore new "press" prompts
+  if (last_digit_pressed && !detectIVRFailure(normalized)) {
+    console.log("digit already pressed", last_digit_pressed);
+    return res.json({
+      action: "wait",
+      reason: "digit already pressed",
+      last_digit_pressed,
+      ivr_retry_count,
+      ivr_level
+    });
+  }
+  
   const digitToPress = extractFirstDigit(normalized);
   if (digitToPress) {
     return res.json({
       action: "press_digit",
       digit: digitToPress,
-      ivr_level,
+      last_digit_pressed: digitToPress,
       ivr_retry_count,
-      last_digit_pressed: digitToPress
+      ivr_level
     });
   }
+  
 
   // Case 4: No action can be taken yet
   return res.json({
